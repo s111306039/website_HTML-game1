@@ -146,7 +146,7 @@
             filter: brightness(0.9);
         }
 
-        /* 新增：被插旗的格子樣式，防止誤觸 */
+        /* 被插旗的格子樣式 */
         .cell.flagged {
             color: #ef4444;
         }
@@ -171,32 +171,100 @@
         .num-7 { color: #000000; }
         .num-8 { color: #475569; }
 
-        /* 結果彈窗 */
-        #result-modal {
+        /* 通用彈窗樣式 */
+        .modal-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.6);
             display: none;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             z-index: 100;
-            backdrop-filter: blur(5px);
+            backdrop-filter: blur(3px);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        /* 顯示時的狀態 (JS切換) */
+        .modal-overlay.show {
+            opacity: 1;
         }
 
         .modal-content {
             background: white;
-            padding: 30px;
+            padding: 25px;
             border-radius: 20px;
             text-align: center;
-            width: 80%;
-            max-width: 300px;
-            animation: popIn 0.3s ease-out;
+            width: 85%;
+            max-width: 320px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        .result-title {
+        /* 動作選單專用樣式 */
+        #action-modal .modal-content {
+            padding: 20px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            justify-content: center;
+        }
+
+        .action-btn {
+            flex: 1;
+            border: none;
+            border-radius: 12px;
+            padding: 15px 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            transition: transform 0.1s;
+        }
+        
+        .action-btn span {
             font-size: 2rem;
-            margin-bottom: 10px;
+            display: block;
+        }
+
+        .action-btn:active {
+            transform: scale(0.95);
+        }
+
+        .dig-btn {
+            background-color: #e0f2fe;
+            color: #0284c7;
+            border: 2px solid #bae6fd;
+        }
+
+        .flag-btn {
+            background-color: #fee2e2;
+            color: #dc2626;
+            border: 2px solid #fecaca;
+        }
+
+        .cancel-btn {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            padding: 10px;
+            width: 100%;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        /* 結果彈窗專用 */
+        .result-title {
+            font-size: 3rem;
+            margin-bottom: 5px;
+            display: block;
         }
 
         .result-text {
@@ -205,7 +273,7 @@
             color: #475569;
         }
 
-        .action-btn {
+        .main-btn {
             background: var(--primary-color);
             color: white;
             border: none;
@@ -215,12 +283,18 @@
             cursor: pointer;
             width: 100%;
             margin-bottom: 10px;
+            font-weight: bold;
         }
 
         .secondary-btn {
             background: transparent;
             color: #64748b;
             border: 2px solid #cbd5e1;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            width: 100%;
         }
 
         @keyframes shake {
@@ -257,7 +331,7 @@
                 <span class="difficulty-info">15 × 15 | 30 顆雷</span>
             </button>
             <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 20px;">
-                規則：點擊格子翻開。<br>數字代表周圍有幾顆地雷。<br>踩到地雷立即結束！
+                規則：點擊格子選擇動作。<br>「翻開」或「插旗」。<br>數字代表周圍有幾顆地雷。
             </div>
         </div>
 
@@ -273,14 +347,30 @@
         </div>
     </div>
 
-    <!-- 結果彈窗 -->
-    <div id="result-modal">
+    <!-- 動作選擇選單 -->
+    <div id="action-modal" class="modal-overlay" onclick="closeActionMenu(event)">
         <div class="modal-content">
-            <div id="result-emoji" class="result-title"></div>
+            <h3 id="action-title" style="margin: 0; color: #334155;">請選擇動作</h3>
+            <div class="action-buttons">
+                <button id="btn-action-dig" class="action-btn dig-btn" onclick="confirmAction('dig')">
+                    <span>💣</span> 翻開
+                </button>
+                <button id="btn-action-flag" class="action-btn flag-btn" onclick="confirmAction('flag')">
+                    <span>🚩</span> 插旗
+                </button>
+            </div>
+            <button class="cancel-btn" onclick="closeActionMenu()">取消</button>
+        </div>
+    </div>
+
+    <!-- 結果彈窗 -->
+    <div id="result-modal" class="modal-overlay">
+        <div class="modal-content">
+            <span id="result-emoji" class="result-title"></span>
             <h2 id="result-heading" style="margin: 0 0 10px 0;"></h2>
             <p id="result-message" class="result-text"></p>
-            <button class="action-btn" onclick="restartGame()">再玩一次</button>
-            <button class="action-btn secondary-btn" onclick="showMenu()">回主選單</button>
+            <button class="main-btn" onclick="restartGame()">再玩一次</button>
+            <button class="secondary-btn" onclick="showMenu()">回主選單</button>
         </div>
     </div>
 
@@ -293,21 +383,21 @@
         };
 
         let currentConfig = null;
-        let grid = []; // 存放格子數據
+        let grid = []; 
         let gameActive = false;
         let timerInterval = null;
         let timeElapsed = 0;
         let minesLocations = [];
         let revealedCount = 0;
-        let flagsCount = 0; /* 新增：旗子計數器 */
+        let flagsCount = 0;
         let isFirstClick = true;
+        let pendingCell = null; // 儲存當前點擊準備操作的格子
 
         // 音效 (使用瀏覽器內建震動)
         function vibrate(pattern) {
             if (navigator.vibrate) navigator.vibrate(pattern);
         }
 
-        // 1. 開始遊戲初始化
         function startGame(difficulty) {
             currentConfig = CONFIG[difficulty];
             document.getElementById('menu-screen').style.display = 'none';
@@ -322,20 +412,18 @@
             gameActive = true;
             timeElapsed = 0;
             revealedCount = 0;
-            flagsCount = 0; /* 新增：重置旗子數 */
+            flagsCount = 0;
             isFirstClick = true;
             grid = [];
             minesLocations = [];
+            pendingCell = null;
             clearInterval(timerInterval);
             document.getElementById('mines-count').innerText = currentConfig.mines;
         }
 
-        // 2. 渲染網格
         function renderGrid() {
             const board = document.getElementById('grid');
             board.innerHTML = '';
-            
-            // 設定 CSS Grid 欄位數
             board.style.gridTemplateColumns = `repeat(${currentConfig.cols}, 1fr)`;
 
             for (let r = 0; r < currentConfig.rows; r++) {
@@ -345,14 +433,13 @@
                     cell.classList.add('cell');
                     if(currentConfig.cellClass) cell.classList.add(currentConfig.cellClass);
                     
-                    // 座標數據屬性
                     cell.dataset.row = r;
                     cell.dataset.col = c;
                     
-                    // 點擊事件
+                    // 左鍵：開啟選擇選單
                     cell.addEventListener('click', () => handleCellClick(r, c));
 
-                    // 新增：右鍵點擊事件 (插旗)
+                    // 右鍵：保留為快速插旗 (方便電腦版)
                     cell.addEventListener('contextmenu', (e) => handleCellRightClick(r, c, e));
                     
                     board.appendChild(cell);
@@ -360,7 +447,7 @@
                         element: cell,
                         isMine: false,
                         revealed: false,
-                        isFlagged: false, // 新增：紀錄是否插旗
+                        isFlagged: false,
                         neighborMines: 0
                     });
                 }
@@ -368,12 +455,73 @@
             }
         }
 
-        // 3. 處理點擊邏輯
-        function handleCellClick(r, c) {
-            // 修改：如果已插旗 (isFlagged)，則不能翻開，防止手滑
-            if (!gameActive || grid[r][c].revealed || grid[r][c].isFlagged) return;
+        // --- 點擊互動邏輯 (修改處) ---
 
-            // 首次點擊：生成地雷 (確保首抽不爆，且盡量開局良好)
+        // 1. 點擊格子 -> 開啟選單
+        function handleCellClick(r, c) {
+            if (!gameActive) return;
+            const cell = grid[r][c];
+            
+            // 如果已經翻開，不做任何事
+            if (cell.revealed) return;
+
+            // 紀錄當前目標
+            pendingCell = { r, c };
+
+            // 根據格子狀態設定選單
+            const title = document.getElementById('action-title');
+            const btnDig = document.getElementById('btn-action-dig');
+            const btnFlag = document.getElementById('btn-action-flag');
+
+            if (cell.isFlagged) {
+                // 如果已插旗，只能選擇移除旗子，不能翻開 (防呆)
+                title.innerText = "已標記旗子";
+                btnDig.style.display = 'none'; // 隱藏翻開按鈕
+                btnFlag.innerHTML = "<span>❌</span> 移除旗子";
+            } else {
+                // 正常狀態
+                title.innerText = "請選擇動作";
+                btnDig.style.display = 'flex'; // 顯示翻開按鈕
+                btnFlag.innerHTML = "<span>🚩</span> 插旗";
+            }
+
+            // 顯示選單
+            const modal = document.getElementById('action-modal');
+            modal.style.display = 'flex';
+            // 讓動畫順暢的小技巧
+            setTimeout(() => modal.classList.add('show'), 10);
+        }
+
+        // 2. 執行選單動作
+        function confirmAction(action) {
+            if (!pendingCell || !gameActive) return;
+            const { r, c } = pendingCell;
+
+            closeActionMenu();
+
+            if (action === 'dig') {
+                performDig(r, c);
+            } else if (action === 'flag') {
+                performFlag(r, c);
+            }
+        }
+
+        // 3. 關閉選單
+        function closeActionMenu(e) {
+            // 如果是點擊背景(overlay)或是明確呼叫關閉
+            if (!e || e.target.id === 'action-modal' || !e.target.id) {
+                const modal = document.getElementById('action-modal');
+                modal.classList.remove('show');
+                setTimeout(() => modal.style.display = 'none', 200);
+            }
+        }
+
+        // 4. 執行「翻開」邏輯
+        function performDig(r, c) {
+            // 安全檢查
+            if (grid[r][c].isFlagged || grid[r][c].revealed) return;
+
+            // 首次點擊生成地雷
             if (isFirstClick) {
                 startTimer();
                 generateMines(r, c);
@@ -382,35 +530,28 @@
 
             const cellData = grid[r][c];
 
-            // 踩到地雷 -> 輸
+            // 踩雷
             if (cellData.isMine) {
                 gameOverLose(r, c);
-                return;
+            } else {
+                // 安全翻開
+                revealCell(r, c);
+                checkWin();
             }
-
-            // 安全 -> 翻開
-            revealCell(r, c);
-
-            // 檢查是否獲勝
-            checkWin();
         }
 
-        // 新增：處理右鍵插旗功能
-        function handleCellRightClick(r, c, e) {
-            e.preventDefault(); // 阻止瀏覽器預設的右鍵選單
-            
-            if (!gameActive || grid[r][c].revealed) return;
+        // 5. 執行「插旗/移除旗子」邏輯
+        function performFlag(r, c) {
+            if (grid[r][c].revealed) return;
 
             const cell = grid[r][c];
-            
-            // 切換插旗狀態
             cell.isFlagged = !cell.isFlagged;
 
             if (cell.isFlagged) {
                 cell.element.innerText = '🚩';
                 cell.element.classList.add('flagged');
                 flagsCount++;
-                vibrate(50); // 給予一點震動回饋
+                vibrate(50);
             } else {
                 cell.element.innerText = '';
                 cell.element.classList.remove('flagged');
@@ -418,39 +559,39 @@
                 vibrate(50);
             }
 
-            // 更新介面上剩餘地雷數 (總雷數 - 旗子數)
             document.getElementById('mines-count').innerText = currentConfig.mines - flagsCount;
         }
 
-        // 4. 生成地雷 (排除 firstRow, firstCol 及其周圍，確保開局體驗好)
+        // 保留右鍵快速插旗功能
+        function handleCellRightClick(r, c, e) {
+            e.preventDefault();
+            if (!gameActive || grid[r][c].revealed) return;
+            performFlag(r, c);
+        }
+
+        // --- 核心遊戲邏輯 ---
+
         function generateMines(safeR, safeC) {
             let minesPlaced = 0;
             while (minesPlaced < currentConfig.mines) {
                 const r = Math.floor(Math.random() * currentConfig.rows);
                 const c = Math.floor(Math.random() * currentConfig.cols);
 
-                // 檢查是否已經有雷
                 if (grid[r][c].isMine) continue;
-
-                // 檢查是否在首點擊的安全範圍內 (九宮格保護)
                 if (Math.abs(r - safeR) <= 1 && Math.abs(c - safeC) <= 1) continue;
 
                 grid[r][c].isMine = true;
                 minesLocations.push({r, c});
                 minesPlaced++;
             }
-
-            // 計算每個格子周圍的地雷數
             calculateNumbers();
         }
 
-        // 計算周圍地雷數
         function calculateNumbers() {
             for (let r = 0; r < currentConfig.rows; r++) {
                 for (let c = 0; c < currentConfig.cols; c++) {
                     if (grid[r][c].isMine) continue;
                     let count = 0;
-                    // 遍歷周圍 8 格
                     for (let i = -1; i <= 1; i++) {
                         for (let j = -1; j <= 1; j++) {
                             const nr = r + i;
@@ -465,14 +606,11 @@
             }
         }
 
-        // 5. 翻開格子 (包含遞迴擴散)
         function revealCell(r, c) {
-            // 邊界檢查與狀態檢查
             if (r < 0 || r >= currentConfig.rows || c < 0 || c >= currentConfig.cols) return;
             const cell = grid[r][c];
-            if (cell.revealed) return;
+            if (cell.revealed || cell.isFlagged) return; // 保護插旗格不被擴散翻開
 
-            // 執行翻開
             cell.revealed = true;
             cell.element.classList.add('revealed');
             revealedCount++;
@@ -481,7 +619,6 @@
                 cell.element.innerText = cell.neighborMines;
                 cell.element.classList.add(`num-${cell.neighborMines}`);
             } else {
-                // 如果是 0，遞迴翻開周圍
                 for (let i = -1; i <= 1; i++) {
                     for (let j = -1; j <= 1; j++) {
                         revealCell(r + i, c + j);
@@ -490,30 +627,25 @@
             }
         }
 
-        // 6. 遊戲結束：失敗
         function gameOverLose(triggerR, triggerC) {
             gameActive = false;
             stopTimer();
-            vibrate(200); // 震動
+            vibrate([100, 50, 100]);
 
-            // 顯示所有地雷
             minesLocations.forEach(pos => {
                 const cell = grid[pos.r][pos.c];
                 cell.element.innerText = '💣';
-                // 觸發格顯示紅色爆炸
                 if (pos.r === triggerR && pos.c === triggerC) {
                     cell.element.classList.add('mine');
                     cell.element.innerText = '💥';
                 }
             });
 
-            // 延遲跳出選單
             setTimeout(() => {
                 showModal('💥', 'BOOM!', '你踩到了地雷！');
             }, 800);
         }
 
-        // 7. 遊戲結束：勝利
         function checkWin() {
             const totalCells = currentConfig.rows * currentConfig.cols;
             const safeCells = totalCells - currentConfig.mines;
@@ -522,11 +654,9 @@
                 gameActive = false;
                 stopTimer();
                 showModal('🏆', '任務完成！', `耗時：${timeElapsed} 秒`);
-                // 簡單的慶祝煙火可以在這裡加，但為了簡潔省略
             }
         }
 
-        // 計時器
         function startTimer() {
             timerInterval = setInterval(() => {
                 timeElapsed++;
@@ -542,22 +672,25 @@
             document.getElementById('timer').innerText = timeElapsed;
         }
 
-        // UI 控制
         function showModal(emoji, title, msg) {
+            const modal = document.getElementById('result-modal');
             document.getElementById('result-emoji').innerText = emoji;
             document.getElementById('result-heading').innerText = title;
             document.getElementById('result-message').innerText = msg;
-            document.getElementById('result-modal').style.display = 'flex';
+            
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('show'), 10);
         }
 
         function restartGame() {
+            document.getElementById('result-modal').classList.remove('show');
             document.getElementById('result-modal').style.display = 'none';
-            // 重新開始當前難度
             const currentDiffKey = Object.keys(CONFIG).find(key => CONFIG[key].rows === currentConfig.rows);
             startGame(currentDiffKey || 'easy');
         }
 
         function showMenu() {
+            document.getElementById('result-modal').classList.remove('show');
             document.getElementById('result-modal').style.display = 'none';
             document.getElementById('game-screen').style.display = 'none';
             document.getElementById('menu-screen').style.display = 'flex';
